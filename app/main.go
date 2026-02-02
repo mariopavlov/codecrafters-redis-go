@@ -22,20 +22,36 @@ func main() {
 		fmt.Println("Failed to bind to port 6379")
 		os.Exit(1)
 	}
+	fmt.Println("Server Started: ", l.Addr())
 	defer l.Close()
 
-	conn, err := l.Accept()
-	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
-		os.Exit(1)
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			fmt.Println("Error accepting connection: ", err.Error())
+			os.Exit(1)
+		}
+		defer conn.Close()
+
+		go acceptConnection(conn)
+
 	}
-	defer conn.Close()
+}
+
+func acceptConnection(conn net.Conn) {
+	fmt.Println("Connection Established...", conn.RemoteAddr())
 
 	for {
 		b := make([]byte, 128)
 		n, err := conn.Read(b)
+
 		if err != nil {
-			fmt.Println("Error Reading Connection: ", err.Error())
+			if err.Error() == "EOF" {
+				fmt.Println("Connection closed by client: ", conn.RemoteAddr())
+			} else {
+				fmt.Println("Error Reading Connection: ", err.Error())
+			}
+
 			return
 		}
 		fmt.Printf("Received Command: %s\n", string(b[:n]))
