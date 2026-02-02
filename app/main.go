@@ -54,7 +54,7 @@ func acceptConnection(conn net.Conn) {
 
 			return
 		}
-		fmt.Printf("Received Command: %s\n", string(b[:n]))
+		parseInput(b[:n])
 
 		resp := []byte("+PONG\r\n")
 		_, err = conn.Write(resp)
@@ -63,4 +63,19 @@ func acceptConnection(conn net.Conn) {
 			return
 		}
 	}
+}
+
+func parseInput(input []byte) []string {
+	if len(input) == 0 {
+		return make([]string, 0)
+	}
+
+	dataType := input[1]
+
+	switch dataType {
+	case '$':
+		fmt.Println("Bulk String")
+	}
+
+	return []string{}
 }
