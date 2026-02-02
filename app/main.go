@@ -66,15 +66,49 @@ func acceptConnection(conn net.Conn) {
 }
 
 func parseInput(input []byte) []string {
+	const SimpleString = '+'
+	const SimpleError = '-'
+	const Integer = ':'
+	const BulkString = '$'
+	const Array = '*'
+	const Null = '_'
+	const Bool = '#'
+	const Double = ','
+	const BigNumber = '('
+	const BulkError = '!'
+	const VerbatimString = '='
+	const Maps = '%'
+	const Attributes = '|'
+	const Sets = '~'
+	const Pushes = '>'
+
+	const CarriageReturn = '\r'
+	const LineFeed = '\n'
+
 	if len(input) == 0 {
 		return make([]string, 0)
 	}
 
-	dataType := input[1]
+	dataType := input[0]
 
 	switch dataType {
-	case '$':
+	case Array:
+		fmt.Println("Array")
+
+		// TODO BUG Works only for single digits
+		size := int(input[1] - '0')
+		fmt.Println(string(input))
+
+		fmt.Println("Size ", size)
+
+		for range size {
+
+			fmt.Println("RANGE ...")
+		}
+
+	case BulkString:
 		fmt.Println("Bulk String")
+		fmt.Println(string(input))
 	}
 
 	return []string{}
