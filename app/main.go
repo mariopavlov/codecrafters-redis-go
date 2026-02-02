@@ -31,18 +31,20 @@ func main() {
 	}
 	defer conn.Close()
 
-	b := make([]byte, 128)
+	for {
+		b := make([]byte, 128)
+		n, err := conn.Read(b)
+		if err != nil {
+			fmt.Println("Error Reading Connection: ", err.Error())
+			return
+		}
+		fmt.Printf("Received Command: %s\n", string(b[:n]))
 
-	n, err := conn.Read(b)
-	if err != nil {
-		fmt.Println("Error Reading Connection: ", err.Error())
-	}
-
-	fmt.Printf("Received Command: %s\n", string(b[:n]))
-
-	resp := []byte("+PONG\r\n")
-	_, err = conn.Write(resp)
-	if err != nil {
-		fmt.Println("Error Sending Response: ", err.Error())
+		resp := []byte("+PONG\r\n")
+		_, err = conn.Write(resp)
+		if err != nil {
+			fmt.Println("Error Sending Response: ", err.Error())
+			return
+		}
 	}
 }
