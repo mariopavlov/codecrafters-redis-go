@@ -1,9 +1,12 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"os"
+	"strconv"
+	"strings"
 )
 
 // Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
@@ -54,9 +57,13 @@ func acceptConnection(conn net.Conn) {
 
 			return
 		}
-		parseInput(b[:n])
 
-		resp := []byte("+PONG\r\n")
+		resp, err := parseInput(b[:n])
+		if err != nil {
+			fmt.Println("error parsing input")
+			return
+		}
+
 		_, err = conn.Write(resp)
 		if err != nil {
 			fmt.Println("Error Sending Response: ", err.Error())
@@ -65,51 +72,39 @@ func acceptConnection(conn net.Conn) {
 	}
 }
 
-func parseInput(input []byte) []string {
-	const SimpleString = '+'
-	const SimpleError = '-'
-	const Integer = ':'
-	const BulkString = '$'
-	const Array = '*'
-	const Null = '_'
-	const Bool = '#'
-	const Double = ','
-	const BigNumber = '('
-	const BulkError = '!'
-	const VerbatimString = '='
-	const Maps = '%'
-	const Attributes = '|'
-	const Sets = '~'
-	const Pushes = '>'
+func parseInput(input []byte) ([]byte, error) {
 
 	const CarriageReturn = '\r'
 	const LineFeed = '\n'
 
-	if len(input) == 0 {
-		return make([]string, 0)
+	inputAsString := string(input)
+	inputType := inputAsString[0]
+	inputSize, err := strconv.Atoi(string(inputAsString[1]))
+
+	if err != nil {
+		return nil, errors.New("error converting input size")
 	}
 
-	dataType := input[0]
+	fmt.Printf("Type: %c, Size: %d\n", inputType, inputSize)
+	sizeRemoved := inputAsString[2:]
 
-	switch dataType {
-	case Array:
-		fmt.Println("Array")
+	cleanInput := strings.TrimSuffix(sizeRemoved, "\r\n")
+	cleanInput = strings.TrimPrefix(cleanInput, "\r\n")
+	result := strings.Split(cleanInput, "\r\n")
 
-		// TODO BUG Works only for single digits
-		size := int(input[1] - '0')
-		fmt.Println(string(input))
+	fmt.Println(result)
 
-		fmt.Println("Size ", size)
+	command := result[1]
 
-		for range size {
-
-			fmt.Println("RANGE ...")
-		}
-
-	case BulkString:
-		fmt.Println("Bulk String")
-		fmt.Println(string(input))
+	switch command {
+	case "ECHO":
+		// $<length>\r\n<data>\r\n
+		commandInput := result[3]
+		resp := fmt.Appendf(nil, "$%d\r\n%s\r\n", len(commandInput), commandInput)
+		return resp, nil
+	default:
+		return []byte("+PONG\r\n"), nil
 	}
 
-	return []string{}
+	return []byte{}, nil
 }
