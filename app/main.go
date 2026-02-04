@@ -98,13 +98,15 @@ func parseInput(input []byte) ([]byte, error) {
 
 	switch command {
 	case "ECHO":
-		// $<length>\r\n<data>\r\n
 		commandInput := result[3]
-		resp := fmt.Appendf(nil, "$%d\r\n%s\r\n", len(commandInput), commandInput)
-		return resp, nil
+		return buildBulkString(commandInput), nil
 	default:
 		return []byte("+PONG\r\n"), nil
 	}
+}
 
-	return []byte{}, nil
+	// Bulk String
+	// $<length>\r\n<data>\r\n
+func buildBulkString(text string) []byte {
+	return fmt.Appendf(nil, "$%d\r\n%s\r\n", len(text), text)
 }
