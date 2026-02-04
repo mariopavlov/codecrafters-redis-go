@@ -16,8 +16,7 @@ var (
 )
 
 func main() {
-	// You can use print statements as follows for debugging, they'll be visible when running tests.
-	fmt.Println("Logs from your program will appear here!")
+	fmt.Println("Starting Redis Server...")
 
 	incChan := make(chan struct{})
 	decChan := make(chan struct{})
@@ -39,6 +38,7 @@ func main() {
 			fmt.Println("Error accepting connection: ", err.Error())
 			os.Exit(1)
 		}
+		defer conn.Close()
 
 		incChan <- struct{}{}
 		go acceptConnection(conn, decChan)
