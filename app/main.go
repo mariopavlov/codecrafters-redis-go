@@ -19,6 +19,11 @@ func main() {
 	// You can use print statements as follows for debugging, they'll be visible when running tests.
 	fmt.Println("Logs from your program will appear here!")
 
+	incChan := make(chan struct{})
+	decChan := make(chan struct{})
+
+	go counterManager(incChan, decChan)
+
 	// Uncomment the code below to pass the first stage
 	l, err := net.Listen("tcp", "0.0.0.0:6379")
 	if err != nil {
@@ -34,15 +39,18 @@ func main() {
 			fmt.Println("Error accepting connection: ", err.Error())
 			os.Exit(1)
 		}
-		defer conn.Close()
 
-		go acceptConnection(conn)
-
+		incChan <- struct{}{}
+		go acceptConnection(conn, decChan)
 	}
 }
 
-func acceptConnection(conn net.Conn) {
+func acceptConnection(conn net.Conn, decChan chan struct{}) {
 	fmt.Println("Connection Established...", conn.RemoteAddr())
+	defer func() {
+		conn.Close()
+		decChan <- struct{}{}
+	}()
 
 	for {
 		b := make([]byte, 128)
@@ -54,7 +62,6 @@ func acceptConnection(conn net.Conn) {
 			} else {
 				fmt.Println("Error Reading Connection: ", err.Error())
 			}
-
 			return
 		}
 
@@ -68,6 +75,21 @@ func acceptConnection(conn net.Conn) {
 		if err != nil {
 			fmt.Println("Error Sending Response: ", err.Error())
 			return
+		}
+	}
+}
+
+func counterManager(incChan, decChan chan struct{}) {
+	counter := 0
+
+	for {
+		select {
+		case <-incChan:
+			counter++
+			fmt.Printf("Connection opened. Active connections: %d\n", counter)
+		case <-decChan:
+			counter--
+			fmt.Printf("Connection closed. Active connections: %d\n", counter)
 		}
 	}
 }
@@ -105,8 +127,8 @@ func parseInput(input []byte) ([]byte, error) {
 	}
 }
 
-	// Bulk String
-	// $<length>\r\n<data>\r\n
+// Bulk String
+// $<length>\r\n<data>\r\n
 func buildBulkString(text string) []byte {
 	return fmt.Appendf(nil, "$%d\r\n%s\r\n", len(text), text)
 }
