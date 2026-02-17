@@ -9,12 +9,6 @@ import (
 	"strings"
 )
 
-// Ensures gofmt doesn't remove the "net" and "os" imports in stage 1 (feel free to remove this!)
-var (
-	_ = net.Listen
-	_ = os.Exit
-)
-
 func main() {
 	fmt.Println("Starting Redis Server...")
 
@@ -120,12 +114,12 @@ func parseInput(input []byte) ([]byte, error) {
 
 	switch command {
 	case "ECHO":
-		if value, ok := getAt(result, 3); ok {
-			return buildBulkString(value), nil
-		} else {
+		value, ok := getAt(result, 3)
+		if !ok {
 			fmt.Printf("error reading ECHO input, not enough parameters")
 			return []byte("+ERROR\r\n"), errors.New("error not enough parameters")
 		}
+		return buildBulkString(value), nil
 	default:
 		return []byte("+PONG\r\n"), nil
 	}
