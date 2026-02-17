@@ -108,7 +108,7 @@ func parseInput(input []byte) ([]byte, error) {
 	}
 
 	fmt.Printf("Type: %c, Size: %d\n", inputType, inputSize)
-	sizeRemoved := inputAsString[idx:]
+	sizeRemoved := inputAsString[2:]
 
 	cleanInput := strings.TrimSuffix(sizeRemoved, "\r\n")
 	cleanInput = strings.TrimPrefix(cleanInput, "\r\n")
