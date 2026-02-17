@@ -108,7 +108,7 @@ func parseInput(input []byte) ([]byte, error) {
 	}
 
 	fmt.Printf("Type: %c, Size: %d\n", inputType, inputSize)
-	sizeRemoved := inputAsString[2:]
+	sizeRemoved := inputAsString[idx:]
 
 	cleanInput := strings.TrimSuffix(sizeRemoved, "\r\n")
 	cleanInput = strings.TrimPrefix(cleanInput, "\r\n")
@@ -120,11 +120,24 @@ func parseInput(input []byte) ([]byte, error) {
 
 	switch command {
 	case "ECHO":
-		commandInput := result[3]
-		return buildBulkString(commandInput), nil
+		if value, ok := getAt(result, 3); ok {
+			return buildBulkString(value), nil
+		} else {
+			fmt.Printf("error reading ECHO input, not enough parameters")
+			return []byte("+ERROR\r\n"), errors.New("error not enough parameters")
+		}
 	default:
 		return []byte("+PONG\r\n"), nil
 	}
+}
+
+func getAt(input []string, idx int) (string, bool) {
+	if idx < len(input) && idx > 0 {
+		return input[idx], true
+	}
+
+	return "", false
+
 }
 
 // Bulk String
