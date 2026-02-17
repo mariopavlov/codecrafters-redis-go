@@ -90,11 +90,20 @@ func counterManager(incChan, decChan chan struct{}) {
 
 func parseInput(input []byte) ([]byte, error) {
 
+	if len(input) == 0 {
+		return nil, errors.New("empty input")
+	}
+
 	const CarriageReturn = '\r'
 	const LineFeed = '\n'
 
 	inputAsString := string(input)
 	inputType := inputAsString[0]
+
+	if len(input) < 2 {
+		return nil, errors.New("malformed input, missing size")
+	}
+
 	inputSize, err := strconv.Atoi(string(inputAsString[1]))
 
 	if err != nil {
@@ -112,6 +121,10 @@ func parseInput(input []byte) ([]byte, error) {
 
 	command := result[1]
 
+	// Handle casing
+	// for now we decide that we accept mixed-casing and wrong casing of the commands
+	command = strings.ToUpper(command)
+
 	switch command {
 	case "ECHO":
 		value, ok := getAt(result, 3)
@@ -120,8 +133,10 @@ func parseInput(input []byte) ([]byte, error) {
 			return []byte("+ERROR\r\n"), errors.New("error not enough parameters")
 		}
 		return buildBulkString(value), nil
-	default:
+	case "PING":
 		return []byte("+PONG\r\n"), nil
+	default:
+		return nil, fmt.Errorf("unrecognized command: %s", command)
 	}
 }
 
